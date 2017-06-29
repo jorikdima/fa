@@ -2,7 +2,7 @@
 
 #FOLDER=linux-2.6.38-fa
 #FOLDER=linux-3.2.82
-FOLDER=linux
+FOLDER=kernel
 CURFOLDER=`pwd`
 
 CONFIGFILE=tyny6410_config
@@ -21,6 +21,7 @@ OUT_OF_TREE_PATH=/mnt/mintdata/tmp/linux/$FOLDER
 case $1 in
 
 clean)
+    rm -r $OUT_OF_TREE_PATH/../initramfs
     cd $FOLDER
     make O=$OUT_OF_TREE_PATH clean
     cd $CURFOLDER
@@ -32,7 +33,9 @@ config)
     ;;
     
 make)
-    cd $FOLDER  
+    cp -rf ../buildroot/initramfs $OUT_OF_TREE_PATH/../ 
+    cd $FOLDER 
+    
     #cp $CURFOLDER/$CONFIGFILE .config
     echo $MAKEPARAMS
     make $MAKEPARAMS O=$OUT_OF_TREE_PATH -j4

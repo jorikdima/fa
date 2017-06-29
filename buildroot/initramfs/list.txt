@@ -90,7 +90,7 @@ slink /usr/sbin/ubirename ../../bin/busybox 777 0 0
 dir /usr/share 755 0 0
 dir /usr/share/udhcpc 755 0 0
 dir /usr/share/udhcpc/default.script.d 755 0 0
-file /usr/share/udhcpc/default.script /home/jorikdima/workdir/friendlyarm/buildroot/2016.05/../initramfs/root/usr/share/udhcpc/default.script 755 0 0
+file /usr/share/udhcpc/default.script ../initramfs/root/usr/share/udhcpc/default.script 755 0 0
 dir /usr/bin 755 0 0
 slink /usr/bin/logname ../../bin/busybox 777 0 0
 slink /usr/bin/unlzma ../../bin/busybox 777 0 0
@@ -193,11 +193,11 @@ slink /usr/bin/hostid ../../bin/busybox 777 0 0
 slink /usr/bin/lzcat ../../bin/busybox 777 0 0
 slink /usr/bin/vlock ../../bin/busybox 777 0 0
 dir /etc 755 0 0
-file /etc/mdev.conf /home/jorikdima/workdir/friendlyarm/buildroot/2016.05/../initramfs/root/etc/mdev.conf 644 0 0
+file /etc/mdev.conf ../initramfs/root/etc/mdev.conf 644 0 0
 dir /etc/init.d 755 0 0
-file /etc/init.d/S01logging /home/jorikdima/workdir/friendlyarm/buildroot/2016.05/../initramfs/root/etc/init.d/S01logging 755 0 0
-file /etc/init.d/S10mdev /home/jorikdima/workdir/friendlyarm/buildroot/2016.05/../initramfs/root/etc/init.d/S10mdev 755 0 0
-file /etc/inittab /home/jorikdima/workdir/friendlyarm/buildroot/2016.05/../initramfs/root/etc/inittab 644 0 0
+file /etc/init.d/S01logging ../initramfs/root/etc/init.d/S01logging 755 0 0
+file /etc/init.d/S10mdev ../initramfs/root/etc/init.d/S10mdev 755 0 0
+file /etc/inittab ../initramfs/root/etc/inittab 644 0 0
 dir /bin 755 0 0
 slink /bin/stty busybox 777 0 0
 slink /bin/umount busybox 777 0 0
@@ -264,10 +264,10 @@ slink /bin/dnsdomainname busybox 777 0 0
 slink /bin/nice busybox 777 0 0
 slink /bin/pidof busybox 777 0 0
 slink /bin/mt busybox 777 0 0
-file /bin/busybox /home/jorikdima/workdir/friendlyarm/buildroot/2016.05/../initramfs/root/bin/busybox 755 0 0
+file /bin/busybox ../initramfs/root/bin/busybox 755 0 0
 slink /bin/watch busybox 777 0 0
 slink /bin/egrep busybox 777 0 0
-file /init /home/jorikdima/workdir/friendlyarm/buildroot/initramfs/init 755 0 0
+file /init ../initramfs/init 755 0 0
 dir /proc 755 0 0
 dir /dev 755 0 0
 nod /dev/console 644 0 0 c 5 1
