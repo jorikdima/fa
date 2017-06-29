@@ -1,0 +1,6 @@
+[submodule "buildroot/buildroot"]
+	path = buildroot/buildroot
+	url = https://github.com/buildroot/buildroot.git
+[submodule "linux/kernel"]
+	path = linux/kernel
+	url = https://github.com/jorikdima/linux

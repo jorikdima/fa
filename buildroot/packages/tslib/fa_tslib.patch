@@ -1,0 +1,167 @@
+diff -Naur /home/jorikdima/workdir/buildroot/2016.05/output/build/tslib-1.1/configure.ac ./configure.ac
+--- /home/jorikdima/workdir/buildroot/2016.05/output/build/tslib-1.1/configure.ac	2013-08-07 17:23:04.000000000 -0700
++++ ./configure.ac	2016-08-20 23:33:14.000000000 -0700
+@@ -55,6 +55,7 @@
+ TSLIB_CHECK_MODULE([linear-h2200], [yes], [Enable building of linearizing filter for iPAQ h2200])
+ TSLIB_CHECK_MODULE([variance], [yes], [Enable building of variance filter])
+ TSLIB_CHECK_MODULE([pthres], [yes], [Enable building of pthres filter])
++TSLIB_CHECK_MODULE([one-wire-ts-input], [yes], [Enable building of one wire ts input (Linux /dev/touchscreen-1wire support)])
+ 
+ # hardware access modules
+ TSLIB_CHECK_MODULE([ucb1x00], [yes], [Enable building of ucb1x00 raw module (UCB1x00 support)])
+diff -Naur /home/jorikdima/workdir/buildroot/2016.05/output/build/tslib-1.1/etc/ts.conf ./etc/ts.conf
+--- /home/jorikdima/workdir/buildroot/2016.05/output/build/tslib-1.1/etc/ts.conf	2013-08-07 17:23:04.000000000 -0700
++++ ./etc/ts.conf	2016-08-22 22:23:05.495627417 -0700
+@@ -19,6 +19,10 @@
+ # Uncomment if you're using an IBM Arctic II
+ # module_raw arctic2
+ 
++# Uncomment if you're using an Friendlyarm
++module_raw one_wire_ts_input
++
++
+ module pthres pmin=1
+ module variance delta=30
+ module dejitter delta=100
+diff -Naur /home/jorikdima/workdir/buildroot/2016.05/output/build/tslib-1.1/fa_tslib.patch ./fa_tslib.patch
+--- /home/jorikdima/workdir/buildroot/2016.05/output/build/tslib-1.1/fa_tslib.patch	1969-12-31 16:00:00.000000000 -0800
++++ ./fa_tslib.patch	2016-08-22 22:23:17.303627521 -0700
+@@ -0,0 +1,25 @@
++diff -Naur /home/jorikdima/workdir/buildroot/2016.05/output/build/tslib-1.1/configure.ac ./configure.ac
++--- /home/jorikdima/workdir/buildroot/2016.05/output/build/tslib-1.1/configure.ac	2013-08-07 17:23:04.000000000 -0700
+++++ ./configure.ac	2016-08-20 23:33:14.000000000 -0700
++@@ -55,6 +55,7 @@
++ TSLIB_CHECK_MODULE([linear-h2200], [yes], [Enable building of linearizing filter for iPAQ h2200])
++ TSLIB_CHECK_MODULE([variance], [yes], [Enable building of variance filter])
++ TSLIB_CHECK_MODULE([pthres], [yes], [Enable building of pthres filter])
+++TSLIB_CHECK_MODULE([one-wire-ts-input], [yes], [Enable building of one wire ts input (Linux /dev/touchscreen-1wire support)])
++ 
++ # hardware access modules
++ TSLIB_CHECK_MODULE([ucb1x00], [yes], [Enable building of ucb1x00 raw module (UCB1x00 support)])
++diff -Naur /home/jorikdima/workdir/buildroot/2016.05/output/build/tslib-1.1/etc/ts.conf ./etc/ts.conf
++--- /home/jorikdima/workdir/buildroot/2016.05/output/build/tslib-1.1/etc/ts.conf	2013-08-07 17:23:04.000000000 -0700
+++++ ./etc/ts.conf	2016-08-22 22:23:05.495627417 -0700
++@@ -19,6 +19,10 @@
++ # Uncomment if you're using an IBM Arctic II
++ # module_raw arctic2
++ 
+++# Uncomment if you're using an Friendlyarm
+++module_raw one_wire_ts_input
+++
+++
++ module pthres pmin=1
++ module variance delta=30
++ module dejitter delta=100
+diff -Naur /home/jorikdima/workdir/buildroot/2016.05/output/build/tslib-1.1/plugins/Makefile.am ./plugins/Makefile.am
+--- /home/jorikdima/workdir/buildroot/2016.05/output/build/tslib-1.1/plugins/Makefile.am	2013-08-07 17:23:04.000000000 -0700
++++ ./plugins/Makefile.am	2016-08-20 23:38:06.000000000 -0700
+@@ -121,6 +121,13 @@
+ CY8MRLN_PALMPRE_MODULE =
+ endif
+ 
++if ENABLE_ONE_WIRE_TS_INPUT_MODULE
++ONE_WIRE_TS_INPUT_MODULE = one_wire_ts_input.la
++else
++ONE_WIRE_TS_INPUT_MODULE =
++endif
++
++
+ pluginexec_LTLIBRARIES = \
+ 	$(LINEAR_MODULE) \
+ 	$(DEJITTER_MODULE) \
+@@ -138,7 +145,8 @@
+ 	$(INPUT_MODULE) \
+ 	$(GALAX_MODULE) \
+ 	$(TOUCHKIT_MODULE) \
+-	$(CY8MRLN_PALMPRE_MODULE)
++	$(CY8MRLN_PALMPRE_MODULE) \
++        $(ONE_WIRE_TS_INPUT_MODULE)
+   
+ variance_la_SOURCES	= variance.c
+ variance_la_LDFLAGS	= -module $(LTVSN)
+@@ -197,3 +205,6 @@
+ 
+ cy8mrln_palmpre_la_SOURCES = cy8mrln-palmpre.c
+ cy8mrln_palmpre_la_LDFLAGS = -module $(LTVSN)
++
++one_wire_ts_input_la_SOURCES = one-wire-ts-input.c
++one_wire_ts_input_la_LDFLAGS = -module $(LTVSN)
+diff -Naur /home/jorikdima/workdir/buildroot/2016.05/output/build/tslib-1.1/plugins/one-wire-ts-input.c ./plugins/one-wire-ts-input.c
+--- /home/jorikdima/workdir/buildroot/2016.05/output/build/tslib-1.1/plugins/one-wire-ts-input.c	1969-12-31 16:00:00.000000000 -0800
++++ ./plugins/one-wire-ts-input.c	2016-08-20 23:58:50.000000000 -0700
+@@ -0,0 +1,66 @@
++#include <termios.h>
++#include <stdio.h>
++#include <unistd.h>
++#include <stdlib.h>
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <sys/ioctl.h>
++#include <fcntl.h>
++#include <linux/fs.h>
++#include <errno.h>
++#include <string.h>
++#include <sys/utsname.h>
++#include <time.h>
++
++
++#include "tslib-private.h"
++
++static int misc_read(struct tslib_module_info *inf, struct ts_sample *samp, int nr)
++{
++       struct tsdev *ts = inf->dev;
++
++       int ret;
++       unsigned ts_status;
++       ret = read(ts->fd, &ts_status, sizeof ts_status);
++       if (ret < 0) {
++               return 0;
++       }
++       if (ret == 0) {
++               return 0;
++       }
++
++       samp->x = ((ts_status) >> 16) & 0x7FFF;
++       samp->y = ts_status & 0x7FFF;
++       samp->pressure = ts_status >> 31;
++       gettimeofday(&samp->tv,NULL);
++       nr = nr;
++
++       return 1;
++}
++static int ts_fini(struct tslib_module_info *inf)
++{
++        free(inf);
++        return 0;
++}
++
++static const struct tslib_ops misc_ops =
++{
++       .read   = misc_read,
++        .fini   = ts_fini,
++};
++
++TSAPI struct tslib_module_info *one_wire_ts_mod_init(struct tsdev *dev, const char *params)
++{
++       struct tslib_module_info *m;
++
++       m = malloc(sizeof(struct tslib_module_info));
++       if (m == NULL)
++               return NULL;
++
++       m->ops = &misc_ops;
++       return m;
++}
++
++#ifndef TSLIB_STATIC_FRIENDLYARM_TS_MODULE
++TSLIB_MODULE_INIT(one_wire_ts_mod_init);
++#endif
+\ No newline at end of file
+diff -Naur /home/jorikdima/workdir/buildroot/2016.05/output/build/tslib-1.1/plugins/plugins.h ./plugins/plugins.h
+--- /home/jorikdima/workdir/buildroot/2016.05/output/build/tslib-1.1/plugins/plugins.h	2013-08-07 17:23:04.000000000 -0700
++++ ./plugins/plugins.h	2016-08-20 23:38:56.000000000 -0700
+@@ -16,3 +16,4 @@
+ TSLIB_DECLARE_MODULE(tatung);
+ TSLIB_DECLARE_MODULE(input);
+ TSLIB_DECLARE_MODULE(cy8mrln_palmpre);
++TSLIB_DECLARE_MODULE(one_wire_ts);

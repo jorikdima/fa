@@ -1,0 +1,2 @@
+source "$BR2_EXTERNAL/dk_leds/Config.in"
+source "$BR2_EXTERNAL/led_player/Config.in"

@@ -1,0 +1,4 @@
+config BR2_PACKAGE_DK_LEDS
+        bool "DK_LEDS"
+        help
+          This is a comment that explains what libfoo is.

@@ -1,0 +1,96 @@
+#! /bin/sh
+
+exec 1>/dev/kmsg 2>&1
+
+echo "Starting initramfs script..."
+
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+runlevel=S
+prevlevel=N
+umask 022
+export PATH runlevel prevlevel
+
+#
+#	Trap CTRL-C &c only in this shell so we can interrupt subprocesses.
+#
+trap ":" INT QUIT TSTP
+/bin/mount -n -t proc proc /proc
+
+cmdline=`cat /proc/cmdline`
+
+ROOT=none
+ROOTFLAGS=
+ROOTFSTYPE=
+NFSROOT=
+IP=
+INIT=/sbin/init
+echo "Command line is:"
+echo $cmdline
+
+for x in $cmdline ; do
+	case $x in
+	root=*)
+		ROOT=${x#root=}
+		;;
+	rootfstype=*)
+		ROOTFSTYPE="-t ${x#rootfstype=}"
+		;;
+	rootflags=*)
+		ROOTFLAGS="-o ${x#rootflags=}"
+		;;
+	init=*)
+		INIT=${x#init=}
+		;;
+	nfsroot=*)
+		NFSROOT=${x#nfsroot=}
+		;;
+	ip=*)
+		IP=${x#ip=}
+		;;
+
+	esac
+done
+
+if [ ! -z $NFSROOT ] ; then
+	echo $NFSROOT | sed s/:/\ /g  > /dev/x ;  read sip dir < /dev/x
+	echo $IP | sed s/:/\ /g > /dev/x;  read cip sip2 gip netmask hostname device autoconf < /dev/x
+	rm /dev/x
+	#echo $sip $dir $cip $sip2 $gip $netmask $hostname $device $autoconf
+	mount -t nfs $NFSROOT /mnt -o nolock,proto=tcp
+	#[ -e /r/dev/console ] || exec /bin/sh
+	
+	echo "Just mounted NFS"
+
+elif [ ! -z $run_fs_image ] ; then
+	ROOTFSTYPE="-t ext3"
+	
+	echo "Run rootfs from file on the SD card"
+	for i in 1 2 3 4 5 ; do
+	echo "Mounting mmcblk0p1 to /sdcard"
+	/bin/mount -n -o sync -o noatime -o nodiratime -t vfat /dev/mmcblk0p1 /sdcard && break
+	echo Waiting for SD Card...
+	sleep 1
+	done
+	echo "Mounting $run_fs_image to loop0"
+	/sbin/losetup /dev/loop0 /sdcard/$run_fs_image
+	
+	echo "Mounting block device loop0 to /mnt"
+	
+	/bin/mount $ROOTFSTYPE /dev/loop0 /mnt
+	
+	echo "Remounting /sdcard to /mnt"
+	mount -o move /sdcard /mnt/mnt
+	#/sbin/losetup /dev/loop1 /r/sdcard/swap
+	#/sbin/swapon /dev/loop1
+
+else
+	echo "Mounting something in somewhere"
+	/bin/mount -n $ROOTFLAGS $ROOTFSTYPE $ROOT /r
+fi
+ 
+umount /proc
+
+echo "Try to switch rootfs"
+#exec /bin/sh
+exec switch_root /mnt $INIT </mnt/dev/console >/mnt/dev/console 2>&1
