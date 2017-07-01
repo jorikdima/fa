@@ -15,6 +15,7 @@ class Button:
 
     def check(self):
         self.last_pressed = datetime.datetime.now()
+        return True
 
 class ADC:
 

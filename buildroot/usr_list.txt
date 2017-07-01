@@ -1,1 +1,1 @@
-dk -1 users -1 =dk /home/dk /bin/sh -  
+dk -1 users -1 =dk /home/dk /bin/sh tty  
