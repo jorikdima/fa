@@ -5,7 +5,7 @@
             "name": "Python",
             "type": "python",
             "request": "launch",
-            "stopOnEntry": true,
+            "stopOnEntry": false,
             "pythonPath": "${config:python.pythonPath}",
             "program": "${file}",
             "cwd": "${workspaceRoot}",
@@ -61,7 +61,7 @@
             "name": "Integrated Terminal/Console",
             "type": "python",
             "request": "launch",
-            "stopOnEntry": true,
+            "stopOnEntry": false,
             "pythonPath": "${config:python.pythonPath}",
             "program": "${file}",
             "cwd": "",
@@ -70,7 +70,7 @@
             "envFile": "${workspaceRoot}/.env",
             "debugOptions": [
                 "WaitOnAbnormalExit",
-                "WaitOnNormalExit"
+                "WaitOnNormalExit"                
             ]
         },
         {

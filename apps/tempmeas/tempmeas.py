@@ -6,6 +6,16 @@ import time
 import csv
 import datetime
 
+class Button:
+
+    last_pressed = None
+    
+    def __init__(self, channum):
+        pass
+
+    def check(self):
+        self.last_pressed = datetime.datetime.now()
+
 class ADC:
 
     chan = 1
@@ -32,6 +42,9 @@ class ADC:
 def main(argv):
     print("Start")
     adc = ADC(1)
+    button = Button(1)
+
+    button.check()
 
     with open('tprofile.csv', 'r') as f:
         reader = csv.reader(f)
@@ -41,15 +54,15 @@ def main(argv):
 
     
     start = datetime.datetime.now()
+    tp = 0
 
     while True:
         v = adc.read()
 
-        dt = datetime.datetime.now() - start
-        dt = dt.seconds
+        dt = (datetime.datetime.now() - start).seconds
         
-        tp = tprofile[dt] if dt in tprofile
-      
+        if dt in tprofile:
+            tp = tprofile[dt]      
         
         print('ADC: %d  Profile: %d  %d' % (v, tp, dt))
         time.sleep(0.5)
