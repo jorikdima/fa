@@ -67,6 +67,9 @@
             "cwd": "",
             "console": "integratedTerminal",
             "env": {},
+            "args": [
+                "DEBUG"
+            ],
             "envFile": "${workspaceRoot}/.env",
             "debugOptions": [
                 "WaitOnAbnormalExit",

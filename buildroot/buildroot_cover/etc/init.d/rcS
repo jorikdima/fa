@@ -26,3 +26,5 @@ for i in /etc/init.d/S??* ;do
 done
 
 /sbin/hwclock -s
+
+mount -n -o sync -o noatime -o nodiratime -t vfat /dev/mmcblk0p1 /sdcard
