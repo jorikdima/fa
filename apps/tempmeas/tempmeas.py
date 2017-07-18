@@ -7,6 +7,7 @@ import csv
 import datetime
 import threading
 import select
+import fcntl
 
 
 class Button:
@@ -59,6 +60,8 @@ class ADC:
     adcpath = '/dev/adc'
     adcfile = None
 
+    setchan_cmd = 0xc000fa01
+
     def read(self):
         if self.adcfile is not None:
             val = int(self.adcfile.readline())
@@ -78,8 +81,11 @@ class ADC:
 
         print("ADC file: ", self.fname)
 
+     
     def __enter__(self):
         self.adcfile = open(self.fname, 'r')
+        rv = fcntl.ioctl(self.adcfile, self.setchan_cmd, self.chan)
+        print("Setting chan to %d Response: %d" %(self.chan, rv))
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.adcfile.close()
@@ -99,8 +105,7 @@ def main(argv):
 
     button = Button(1)
 
-    tprofile = os.path.dirname(os.path.realpath(__file__))
-    + os.path.sep + 'tprofile.csv'
+    tprofile = os.path.dirname(os.path.realpath(__file__)) + os.path.sep + 'tprofile.csv'
 
     with open(tprofile, 'r') as f:
         reader = csv.reader(f)
@@ -109,21 +114,45 @@ def main(argv):
                     for old_key, val in tprofile.items()}
         del reader
 
+
+    tr = os.path.dirname(os.path.realpath(__file__)) + os.path.sep + 'tr.csv'
+
+    temp_c = ()
+    res_ohm = ()
+    
+    with open(tr, 'r') as f:
+        reader = csv.reader(f)
+        cols = list(zip(*reader))
+        del reader
+
+        temp_c = cols[0]
+        res_ohm = cols[4]
+
+    
     tp = 0
 
     adc = ADC(1)
     dt = 0
 
+    r1_ohm = 1000
+
     with adc:
         while True:
             v = adc.read()
+            if v == 0: v = 1
+
+            rt = r1_ohm*(1024/v-1)
+            rt = min(res_ohm, key=lambda x:abs(float(x)-rt))
+                        
+            index = res_ohm.index(rt)
+            temp = temp_c[index]
 
             if button.last_pressed is not None:
                 dt = (datetime.datetime.now() - button.last_pressed).seconds
                 if dt in tprofile:
                     tp = tprofile[dt]
 
-            print('ADC: %d  Profile: %d  %d' % (v, tp, dt))
+            print('ADC: %d Res: %s Temp: %s Profile: %d  %d' % (v, rt, temp, tp, dt))
             time.sleep(0.5)
 
 
